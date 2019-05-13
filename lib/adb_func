@@ -1,0 +1,36 @@
+#! /bin/bash
+if [ ${root}x = x ]
+then 
+    echo "Error: Variable root is not set yet!"
+    exit 1
+else
+    if [ "${TITLE}x" = x ]
+    then source $root/echo_color apply_scheme
+    fi
+    source $root/../configs/adb_commands.cfg
+fi
+
+call(){
+    
+}
+
+adbInitServer(){
+    $RUNMSG ">> Starting ADB Server..."
+    # restart adb server
+    sudo adb kill-server
+    sudo adb start-server
+}
+
+adbInitDevice(){
+    devices=(`adb devices`)
+    deviceid=${devices[4]}
+    echo;echo "==>Get Your Device ID: $deviceid";echo
+    adbnor="adb -s $deviceid "
+    adbshell="$adbnor shell "
+    temp=(`$adbshell ${cmdlist[$getsize]}`)
+    screen=(`sed s/x/' '/ << Test
+    ${temp[2]}
+    Test`)
+    screenx=${screen[0]}; screeny=${screen[1]}
+    echo "==>Get Your Screen Size: $screenx x $screeny";echo
+}
