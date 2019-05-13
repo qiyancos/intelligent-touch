@@ -1,15 +1,4 @@
 #! /bin/bash
-if [ ${root}x = x ]
-then 
-    echo "Error: Variable root is not set yet!"
-    exit 1
-else
-    if [ "${TITLE}x" = x ]
-    then source $root/echo_color apply_scheme
-    fi
-    source $root/../configs/adb_commands.cfg
-fi
-
 call(){
     
 }
@@ -17,20 +6,31 @@ call(){
 adbInitServer(){
     $RUNMSG ">> Starting ADB Server..."
     # restart adb server
-    sudo adb kill-server
-    sudo adb start-server
+    checkRun "sudo adb kill-server"
+    checkRun "sudo adb start-server"
+    _RetVal[0]=0
 }
 
 adbInitDevice(){
-    devices=(`adb devices`)
-    deviceid=${devices[4]}
-    echo;echo "==>Get Your Device ID: $deviceid";echo
-    adbnor="adb -s $deviceid "
-    adbshell="$adbnor shell "
-    temp=(`$adbshell ${cmdlist[$getsize]}`)
-    screen=(`sed s/x/' '/ << Test
-    ${temp[2]}
-    Test`)
-    screenx=${screen[0]}; screeny=${screen[1]}
-    echo "==>Get Your Screen Size: $screenx x $screeny";echo
+    temp=(`checkRun "adb devices"`)
+    deviceID=${temp[4]}
+    $WARNT "-- Set Device ID to: $deviceid"
+    adbshell="adb -s $deviceID shell "
+    adbGetScreenSize
+    screenX=_RetVal[0]
+    screenY=_RetVal[1] 
+    $WARNT "-- Set Device's Screen Size to: $screenX x $screenY"
+    _RetVal[0]=$deviceID
+}
+
+adbGetScreenSize(){
+    if [ ${screenX}x != x ]
+    then 
+        call getScreenSize
+        _RetVal[0]=${screen[0]}
+        _RetVal[1]=${screen[1]}
+    else 
+        _RetVal[0]=$screenX
+        _RetVal[1]=$screenY
+    fi
 }

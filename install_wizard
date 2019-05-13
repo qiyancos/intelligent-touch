@@ -6,26 +6,13 @@ installPath=${installPath[5]}/.Remote_Checker
 dateTag=`date | base64`
 cd $root
 root=$PWD
-checkRun "chmod +x $root/lib/echo_color"
-source $root/lib/echo_color apply_scheme
+source $root/lib/basic_func
 
 abandon(){
 	$WARN; echo " Install Wizard exiting due to the problem listed below:"
 	$HIGHLIGHT $*
 	$TITLE  "======================Installation Stopped!======================"
 	exit
-}
-
-checkRun(){
-	$*
-	errCode=$?
-	if [ $errCode != 0 ]
-	then 
-		$ERROR; echo " Error(s) occurred while executing the command line listed below:"
-		$HIGHLIGHT "\"$*\""
-		echo "Returned with error code ($errCode)"
-		exit
-	fi
 }
 
 $TITLE	"================================================================="

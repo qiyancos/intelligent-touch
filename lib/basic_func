@@ -1,0 +1,26 @@
+#! /bin/bash
+checkRun(){
+    $*
+    errCode=$?
+    if [ $errCode != 0 ]
+    then
+        $ERROR; echo " Error(s) occurred while executing the command line listed below:"
+        $HIGHLIGHT "\"$*\""
+        echo "Returned with error code ($errCode)"
+        exit
+    fi
+}
+
+if [ ${root}x = x ]
+then
+    echo "Error: Variable root is not set yet!"
+    exit 1
+else
+    source $root/lib/echo_color apply_scheme
+    if [ ${1}x = with_adbx ]
+    then
+        source $root/configs/adb_commands.cfg
+        source $root/lib/adb_func
+        source $root/configs/tap_point.cfg
+    fi
+fi

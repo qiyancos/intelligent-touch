@@ -57,6 +57,7 @@ then
     WARN="$root/lib/echo_color yellow bold -n -t <Warning>"
     ERROR="$root/lib/echo_color red bold -n -t <Error>"
     HIGHLIGHT="$root/lib/echo_color red -t"
+    SCHEME_SET=1
 else
     if [ ${1}x = -hx -o ${1}x = x ]
     then 
