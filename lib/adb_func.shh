@@ -1,0 +1,176 @@
+#! /bin/bash
+if [ x$_SHIMPORT_ = x ]
+then
+	echo "Error: Can not run without shimport!"
+	exit 1
+fi
+import color_scheme.shh
+import basic_func.shh
+
+__LkeyNameList=("NULL" "NULL" "NULL" "Home" "Return" "Dail" "HangUp" "VolUp"
+		"VolDown" "Power" "Photo" "Browser" "Menu" "Play" "Stop" "Next"
+		"Last" "EditHome" "EditEnd" "Continue" "Pause" "Mute" "SystemSetting"
+		"SwitchApp" "Contacts" "Calender" "Music" "Calculator" "BrightnessDown"
+		"BrightnessUp" "Sleep" "Unlock" "Assistant")
+__LkeyValList=(3 4 5 6 24 25 26 27 64 82 85 86 87 88 122 123 126 127
+		164 176 187 207 208 209 210 220 221 223 224 231)
+
+__Ghelp(){
+	ERROR "Help function not impelmented yet!"
+}
+
+__GadbInitServer(){
+    unset __G_RetVal
+	setArgs $*
+	checkArgs '$_funcArgsCnt = 0'
+    RUNMSGL ">> Starting ADB Server..."
+    # restart adb server
+    checkRun "sudo adb kill-server"
+    checkRun "sudo adb start-server"
+	__LserverReady=1
+}
+
+__GadbInitDevice(){
+	setArgs $*
+	checkArgs '$_funcArgsCnt = 0'
+    unset __LdeviceId
+	if [ x$__LserverReady != x1 ]
+	then
+		WARN "Can not init device with no server initiated!"
+		__GadbInitServer
+	fi
+	__Ltemp=(`checkRun "adb devices"`)
+    __LdeviceId=${__Ltemp[4]}
+    if [ x$__LdeviceId = x ]
+	then
+		ERROR "Can not find any device available!"
+		abandon 1
+	fi
+	WARNTL "-- Set device ID to: $__LdeviceId"
+    __LadbShell="adb -s $__LdeviceId shell "
+    __GadbGetScreenSize
+    __G_RetVal[0]=$__LdeviceID
+	returnArgs
+}
+
+__GadbGetScreenSize(){
+	setArgs $*
+	checkArgs '$_funcArgsCnt = 0'
+	if [ x$__LscreenX = x ]
+    then
+		if [ x$__LdeviceId = x ]
+		then
+			ERROR "Can not get screen size with no device initiated!"
+			abandon 1
+		fi
+		__Ltemp=(`checkRun $__LadbShell wm size`)
+		__LscreenSize=(`echo ${__Ltemp[2]} | sed 's/x/ /'`)
+		__LscreenX=${__LscreenSize[0]}
+		__LscreenY=${__LscreenSize[1]}
+    	WARNTL "-- Set device's screen size to: $__LscreenX x $__LscreenY"
+	fi
+	returnArgs $__LscreenX $__LscreenY
+}
+
+__GadbTapScreen(){
+	setArgs $*
+	checkArgs '$_funcArgsCnt = 2'
+	checkArgs '`isAllNumber ${_funcArgs[*]}` = 1'
+	RUNMSGL ">> Tap screen at coordinate [$1, $2]"
+	checkRun $__LadbShell input tap $1 $2
+}
+
+__GadbSwipeScreen(){
+	setArgs $*
+	checkArgs '$_funcArgsCnt = 4 -o $_funcArgsCnt = 5'
+	checkArgs '`isAllNumber ${_funcArgs[*]}` = 1'
+	if [ x$5 = x ]
+	then RUNMSGL ">> Swipe screen from [$1, $2] to [$3, $4]"
+	else RUNMSGL ">> Swipe screen from [$1, $2] to [$3, $4] in ${5}ms"
+	fi
+	checkRun $__LadbShell input swipe $*
+}
+
+alias __GadbPressKey="__LadbPressKey short"
+alias __GadbLongPressKey="__LadbPressKey long"
+
+__LadbPressKey(){
+	setArgs $*
+	checkArgs '$_funcArgsCnt = 2'
+	__Lindex=0
+	while [ x${__LkeyNameList[$__Lindex]} != x ]
+	do
+		if [ ${__LkeyNameList[$__Lindex]} = $2 ]
+		then
+			if [ $1 = 1ong ]
+			then
+				RUNMSGL ">> Long press key \"$2($__Lindex)\""
+				checkRun $__LadbShell input keyevent \
+						--longpress $__Lindex
+			else
+				RUNMSGL ">> Press key \"$2($__Lindex)\""
+				checkRun $__LadbShell input keyevent $__Lindex
+			fi
+			return
+		else __Lindex=$[__Lindex + 1]
+		fi
+	done
+	ERROR "Can not find the Key named as \"$1\""
+	abandon 1
+}
+
+__GadbInputText(){
+	setArgs $*
+	if [ $# != 1 ]
+	then
+		if [ x"cat" = x ]
+		then
+			RUNMSGL ">> Input text \"`cat`\""
+			checkRun $__LadbShell input text "`cat`"
+		else
+			ERROR "Can not find given input text"
+			abandon 1
+		fi
+	else
+		RUNMSGL ">> Input text \"$1\""
+		checkRun $__LadbShell input text $1
+	fi
+}
+
+__GadbStartApp(){
+	setArgs $*
+	checkArgs '$_funcArgsCnt = 1'
+	RUNMASGL ">> Start app [$1]"
+	checkRun $__LadbShell am start -n $1
+}
+
+__GadbGetBatteryLevel(){
+	setArgs $*
+	checkArgs '$_funcArgsCnt = 0'
+	__LbatteryLevel=$(checkRun $__LadbShell dumpsys battery | awk '/level:/ {print $2}')
+	WARNTL "-- Get device battery level $__LbatteryLevel%"
+	returnArgs $__LbatteryLevel
+}
+
+__GadbScreenCapture(){
+	setArgs $*
+	checkArgs '$_funcArgsCnt = 1'
+	RUNMASGL ">> Capture screen and save to $1"
+	checkRun $__LadbShell screencap -p $1
+}
+
+__GadbDownloadFile(){
+	setArgs $*
+	checkArgs '$_funcArgsCnt = 2'
+	checkArgs '-f ${_funcArgs[2]}'
+	RUNMASGL ">> Download file \"$1\" from device to \"$2\""
+	checkRun $__LadbShell pull $1 $2
+}
+
+__GadbUploadFile(){
+	setArgs $*
+	checkArgs '$_funcArgsCnt = 2'
+	checkArgs '-f ${_funcArgs[1]}'
+	RUNMASGL ">> Upload file \"$1\" to device \"$2\""
+	checkRun $__LadbShell push $1 $2
+}

@@ -1,0 +1,11 @@
+#! /bin/bash
+if [ x$_SHIMPORT_ = x ]
+then
+	echo "Error: Can not run without shimport!"
+	exit 1
+fi
+import color_scheme.shh
+import basic_func.shh
+import adb_func.shh
+
+
