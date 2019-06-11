@@ -4,8 +4,8 @@ then
 	echo "Error: Can not run without shimport!"
 	exit 1
 fi
-import color_scheme.shh
-import basic_func.shh
+shimport color_scheme.shh
+shimport basic_func.shh
 
 __LkeyNameList=("NULL" "NULL" "NULL" "Home" "Return" "Dail" "HangUp" "VolUp"
 		"VolDown" "Power" "Photo" "Browser" "Menu" "Play" "Stop" "Next"

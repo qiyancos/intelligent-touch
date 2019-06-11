@@ -2,8 +2,8 @@
 
 if [ x$_SHIMPORT_ = x ]
 then 
-	alias import="_import"
-	alias import-help="_importHelp"
+	alias shimport="_shimport"
+	alias shimport-help="_shimportHelp"
 	_IMPORT_PATH_=$SHIMPORT_PATH
 	_SHIMPORT_=1
 fi
@@ -14,7 +14,7 @@ do _newPaths="$_newPaths_ $(_getAbsolutePath $_dir)"
 done
 _IMPORT_PATH_="$_newPaths $_IMPORT_PATH_"
 
-_importHelp(){
+_shimportHelp(){
 	if [ x$1 = x ]
 	then
 		echo "Import error: No shh file specified!"
@@ -25,7 +25,7 @@ _importHelp(){
 		exit 1
 	else
 		_tempNameSpace=help_$(md5sum $1 | awk '{print $1}')
-		import $1 as $_tempNameSpace
+		shimport $1 as $_tempNameSpace
 		${_tempNameSpace}_help
 	fi
 }
@@ -53,10 +53,10 @@ _getAbsolutePath(){
 	fi
 }
 
-_import(){
+_shimport(){
 	if [ $# != 1 -a $# != 3 ]
 	then
-		echo "Import error: Syntax error with import!"
+		echo "Import error: Syntax error with shimport!"
 		exit 1
 	fi
 
@@ -92,7 +92,7 @@ _import(){
 		_anonymousId=$_resultFileMd5sum
 		if [ $2 != as ]
 		then 
-			echo "Import error: Syntax error with import!"
+			echo "Import error: Syntax error with shimport!"
 			exit 1
 		elif [ "x`echo ${_NAMESPACE_} | grep $3`" != x ]
 		then
@@ -172,8 +172,8 @@ _import(){
 
 # ### shell script ###
 # source shimport
-# import ./test.sh as test
-# import test.sh
+# shimport ./test.sh as test
+# shimport test.sh
 # 
 # test_setId 5
 # echo $test_id # 7
