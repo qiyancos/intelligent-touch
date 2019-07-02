@@ -27,8 +27,8 @@ __LkeyValList=(0 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19
                111 112 115 116 121 122 123 124 143 164 168 169)
 
 __LkeyEventNameList=("Menu" "Home" "Back" "Power" "VolUp" "VolDown")
-__LkeyEventValList=(? ? ? 116 115 114)
-__LkeyEventIDList=(? ? ? 0 3 0)
+__LkeyEventValList=(139 102 158 116 115 114)
+__LkeyEventIDList=(2 5 2 0 5 0)
 # The settings above can be different between two different devices
 
 __Ghelp(){
@@ -98,7 +98,7 @@ __GadbTapScreen(){
 		ERROR "Can not run adb functions with no device initiated!"
 		abandon 1
 	fi
-	RUNMSGL ">> Tap screen at coordinate [$1, $2]"
+	echo ">> Tap screen at coordinate [$1, $2]"
 	checkRun $__LadbShell input tap $1 $2
 }
 
@@ -113,7 +113,7 @@ __GadbLongTapScreen(){
 		ERROR "Can not run adb functions with no device initiated!"
 		abandon 1
 	fi
-	RUNMSGL ">> Tap screen at coordinate [$1, $2] for ${2}ms"
+	echo ">> Tap screen at coordinate [$1, $2] for ${2}ms"
     __LadbSwipeScreen $1 $2 $1 $2 $3
 }
 
@@ -131,8 +131,8 @@ __GadbSwipeScreen(){
 		abandon 1
 	fi
 	if [ x$5 = x ]
-	then RUNMSGL ">> Swipe screen from [$1, $2] to [$3, $4]"
-	else RUNMSGL ">> Swipe screen from [$1, $2] to [$3, $4] in ${5}ms"
+	then echo ">> Swipe screen from [$1, $2] to [$3, $4]"
+	else echo ">> Swipe screen from [$1, $2] to [$3, $4] in ${5}ms"
 	fi
 	__LadbSwipeScreen $*
 }
@@ -154,7 +154,7 @@ __GadbPressKey(){
 	do
 		if [ ${__LkeyNameList[$__Lindex]} = $1 ]
 		then
-			RUNMSGL ">> Press key \"$1(${__LkeyValList[$__Lindex]})\""
+			echo ">> Press key \"$1(${__LkeyValList[$__Lindex]})\""
 			checkRun $__LadbShell input keyevent ${__LkeyValList[$__Lindex]}
 			return
 		else __Lindex=$[__Lindex + 1]
@@ -182,7 +182,7 @@ __GadbLongPressKey(){
             if [ $__Ltime = 0 ]
             then __Ltime=1
             fi
-			RUNMSGL ">> Long Press key \"$1(${__LkeyEventValList[$__Lindex]})\" for ${2}ms"
+			echo ">> Long Press key \"$1(${__LkeyEventValList[$__Lindex]})\" for ${__Ltime}ms"
             checkRun $__LadbShell sendevent \
                     /dev/input/event${__LkeyEventIDList[$__Lindex]} \
                     1 ${__LkeyEventValList[$__Lindex]} 1
@@ -214,14 +214,14 @@ __GadbInputText(){
 	then
 		if [ x"cat" = x ]
 		then
-			RUNMSGL ">> Input text \"`cat`\""
+			echo ">> Input text \"`cat`\""
 			checkRun $__LadbShell input text "`cat`"
 		else
 			ERROR "Can not find given input text"
 			abandon 1
 		fi
 	else
-		RUNMSGL ">> Input text \"$1\""
+		echo ">> Input text \"$1\""
 		checkRun $__LadbShell input text $1
 	fi
 }
@@ -234,7 +234,7 @@ __GadbStartApp(){
 		ERROR "Can not run adb functions with no device initiated!"
 		abandon 1
 	fi
-	RUNMASGL ">> Start app [$1]"
+	RUNMSGL ">> Start app [$1]"
 	checkRun $__LadbShell am start -n $1
 }
 
@@ -251,40 +251,40 @@ __GadbGetBatteryLevel(){
 	returnArgs $__LbatteryLevel
 }
 
-__GadbScreenCapture(){
+__GadbCaptureScreen(){
 	setArgs $*
-	checkArgs '$# = 1' "Too many arguments"
+	checkArgs '$# = 1' "Too many or too few arguments"
     if [ x$__LdeviceID = x ]
 	then
 		ERROR "Can not run adb functions with no device initiated!"
 		abandon 1
 	fi
-	RUNMASGL ">> Capture screen and save to $1"
+	echo ">> Capture screen and save to $1"
 	checkRun $__LadbShell screencap -p $1
 }
 
 __GadbDownloadFile(){
 	setArgs $*
-	checkArgs '$# = 2' "Too many arguments"
+	checkArgs '$# = 2' "Too many or to few arguments"
 	checkArgs '-d `dirname $2`' "No such directory"
     if [ x$__LdeviceID = x ]
 	then
 		ERROR "Can not run adb functions with no device initiated!"
 		abandon 1
 	fi
-	RUNMASGL ">> Download file \"$1\" from device to \"$2\""
+	echo ">> Download file \"$1\" from device to \"$2\""
 	checkRun $__LadbShell pull $1 $2
 }
 
 __GadbUploadFile(){
 	setArgs $*
-	checkArgs '$# = 2' "Too many arguments"
+	checkArgs '$# = 2' "Too many or too few arguments"
 	checkArgs '-f $1' "No such file"
     if [ x$__LdeviceID = x ]
 	then
 		ERROR "Can not run adb functions with no device initiated!"
 		abandon 1
 	fi
-	RUNMASGL ">> Upload file \"$1\" to device \"$2\""
+	echo ">> Upload file \"$1\" to device \"$2\""
 	checkRun $__LadbShell push $1 $2
 }

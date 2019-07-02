@@ -1,0 +1,82 @@
+#! /bin/bash
+if [ x$_SHIMPORT_ = x ]
+then
+	echo "Error: Can not run without shimport!"
+	exit 1
+fi
+shimport color_scheme.shh
+shimport basic_func.shh
+shimport adb_func.shh
+
+# __LunlockTapPoints=()
+# __LunlockCode=
+# We don't want to use tap point as it must be specified manually!
+__GtraceFileDir=$adbDeviceConfigDir/motion_traces
+
+__GcheckDeviceLock(){
+    setArgs $*
+    checkArgs '$# = 0' "Too many arguments"
+    RUNMSGL ">> Device status check (locked/unlocked)"
+    if [ x$__LlockMd5sum = x ]
+    then
+        WARN "Your device will be locked for the first-time check"
+        adbPressKey Home
+        adbPressKey Power
+        adbCaptureScreen /sdcard/a.png
+        adbDownloadFile /sdcard/a.png /tmp/dingding_func.png
+        __LlockMd5sum=`md5sum /tmp/dingding_func.png | awk '{print $1}'`
+        returnArgs 1
+    else
+        adbCaptureScreen /sdcard/a.png
+        adbDownloadFile /sdcard/a.png /tmp/dingding_func.png
+        if [ `md5sum /tmp/dingding_func.png | awk '{print $1}'` = $__LlockMd5sum ]
+        then
+            WARNTL "-- Your device is still locked now."
+            returnArgs 1
+        else 
+            WARNTL "-- Your device is already unlocked now."
+            returnArgs 0
+        fi
+    fi
+}
+
+__GunlockDevice(){
+    setArgs $*
+    checkArgs '$# = 0' "Too many arguments"
+    if [ x$__LunlockTraceFile != x ]
+    then
+        if [ -f $__LtraceFileDir/$__LunlockTraceFile ]
+        then
+            __GcheckDeviceLock
+            if [ ${_retVal[0]} = 0 ]
+            then
+                RUNMSGL ">> Start unlocking you device..."
+                adbPressKey Power
+                __LreplayEventTrace $__LtraceFileDir/$__LunlockTraceFile
+                return 0
+            fi
+        fi
+    fi
+    WARN "Cannot locate tracefile for unlock."
+    RUNMSGL ">> Start generating unlock trace file..."
+    WARN "Please operate strictly according to the given instructions!"
+    adbPressKey Home
+    adbPressKey Power
+    adbPressKey Power
+    __LrecordEventTrace "Unlock Device"
+    __LunlockTraceFile=${_retVal[0]}
+}
+
+__LreplayEventTrace(){
+    setArgs $*
+    WARN "Don not touch your device at will until the record is finished!"
+    nohup &
+    __LeventTracerID=`ps -ef | grep | `
+    RUNMSGL ">> Preparation for motion trace record is done"
+    WARN "Please peform the following actions and then lock your device as a finish point"
+    kill -9 $__LeventTraceID
+    sed -i /event$/d
+}
+
+__LrecordEventTrace(){
+}

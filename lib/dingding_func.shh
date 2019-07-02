@@ -4,9 +4,77 @@ then
 	echo "Error: Can not run without shimport!"
 	exit 1
 fi
-import color_scheme.shh
-import basic_func.shh
-import adb_func.shh
+shimport color_scheme.shh
+shimport basic_func.shh
+shimport adb_func.shh
+shimport phone_func.shh
+
+__LappName="com.alibaba.android.rimet/com.alibaba.android.rimet.biz.LaunchHomeActivity"
+__LweekendOffset=20
+__LunlockTapPoints=()
+__LunlockCode=
 
 __GloadConfig(){
+    setArgs $*
+    checkArgs '$# = 1' "Too many arguments"
+    checkArgs '-f $1' "No such file"
+    __Lformat=`basename $1 | sed 's/\./ /g' | awk '{print $NF}'`
+    if [[ ! $__Lformat =~ ^(csv|xlsx)$ ]]
+    then
+        ERROR "Unsupportable file format"
+        abondon 1
+    elif [ $__Lformat = xlsx ]
+    then in2csv $1 > /tmp/dingding_func.cfg
+    else cp $1 /tmp/dingding_func.cfg
+    fi
+    __LconfigParser /tmp/dingding_func.cfg
+}
+
+__GenterApp(){
+    adbInitDevice
+    __LenvReady=${_retVal[0]}
+    unlockPhone
+}
+
+__LconfigParser(){
+    setArgs $*
+    checkArgs '-f $1' "No such file"
+    __Lweekend=0
+    __Lline=1
+    while [ 1 ]
+    do 
+        __LworkingItem=`sed -n ${__Lline}p`
+        if [ x$__LworkingItem = x ]
+        then break
+        fi
+        __LworkingItems=(`echo $__LworkingItem | sed 's/,/ /g'`)
+        if [ ${__LworkingItems[0]} = Weekdays ]
+        then continue
+        elif [ ${__LworkingItems[0]} = Weekend ]
+        then __Lweekend=$__LweekendOffset
+        fi
+        __lindex=$[${__LworkingItems[0]} + $__Lweekend]
+        __LgetAbsoluteTime ${__LworkingItems[1]}
+        __LworkingItems[1]=${_retVal[0]}
+        __LfloatToPercentage ${__LworkingItems[5]}
+        __LworkingItems[5]=${_retVal[0]}
+        __LfloatToPercentage ${__LworkingItems[7]}
+        __LworkingItems[7]=${_retVal[0]}
+        checkPoints[$__Lindex]=${__LworkingItems[*]}
+    done
+}
+
+__LgetAbsoluteTime(){
+    setArgs $*
+    checkArgs '$# = 1' "Too many or too few arguments"
+    __LtimeVals=(`echo $1 | sed 's/:/ /g'`)
+    returnArgs $[${__LtimeVals[0]} * 60 + ${__LtimeVal[1]}]
+}
+
+__LfloatToPercentage(){
+    setArgs $*
+    checkArgs '$# = 1' "Too many or too few arguments"
+    __LvalParts=(`echo $1 | sed 's/./ /g'`)
+    checkArgs '`isAllNumber ${__LvalParts[*]}` = 1' "Not a number"
+    returnArgs $[${__LvalParts[0]} * 100 + ${__LvalParts[1]:0:2}]
 }
