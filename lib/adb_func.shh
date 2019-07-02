@@ -27,8 +27,8 @@ __LkeyValList=(0 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19
                111 112 115 116 121 122 123 124 143 164 168 169)
 
 __LkeyEventNameList=("Menu" "Home" "Back" "Power" "VolUp" "VolDown")
-__LkeyEventValList=(? ? ? 116 114 115)
-__LkeyEventIDList=(? ? ? 0 0 0)
+__LkeyEventValList=(? ? ? 116 115 114)
+__LkeyEventIDList=(? ? ? 0 3 0)
 # The settings above can be different between two different devices
 
 __Ghelp(){
@@ -37,7 +37,7 @@ __Ghelp(){
 
 __GadbInitServer(){
 	setArgs $*
-	checkArgs '$_funcArgsCnt = 0' "Too many arguments"
+	checkArgs '$# = 0' "Too many arguments"
     RUNMSGL ">> Starting ADB Server..."
     # restart adb server
     checkRun "sudo adb kill-server"
@@ -47,7 +47,7 @@ __GadbInitServer(){
 
 __GadbInitDevice(){
 	setArgs $*
-	checkArgs '$_funcArgsCnt = 0' "Too many arguments"
+	checkArgs '$# = 0' "Too many arguments"
     unset __LdeviceID
 	if [ x$__LserverReady != x1 ]
 	then
@@ -70,7 +70,7 @@ __GadbInitDevice(){
 
 __GadbGetScreenSize(){
 	setArgs $*
-	checkArgs '$_funcArgsCnt = 0' "Too many arguments"
+	checkArgs '$# = 0' "Too many arguments"
 	if [ x$__LscreenX = x ]
     then
 		if [ x$__LdeviceID = x ]
@@ -89,8 +89,10 @@ __GadbGetScreenSize(){
 
 __GadbTapScreen(){
 	setArgs $*
-	checkArgs '$_funcArgsCnt = 2' "Too many or too few arguments"
-	checkArgs '`isAllNumber ${_funcArgs[*]}` = 1' "Not a normal number"
+	checkArgs '$# = 2' "Too many or too few arguments"
+	checkArgs '`isAllNumber $*` = 1' "Not a normal number"
+	checkArgs '$1 -ge 0 -a $2 -ge 0' "Out of range [$__LscreenX, $__LscreenY]"
+    checkArgs '$1 -lt $__LscreenX -a $2 -lt $__LscreenY' "Out of range"
 	if [ x$__LdeviceID = x ]
 	then
 		ERROR "Can not run adb functions with no device initiated!"
@@ -100,10 +102,29 @@ __GadbTapScreen(){
 	checkRun $__LadbShell input tap $1 $2
 }
 
+__GadbLongTapScreen(){
+	setArgs $*
+	checkArgs '$# = 3' "Too many or too few arguments"
+	checkArgs '`isAllNumber $*` = 1' "Not a normal number"
+	checkArgs '$1 -ge 0 -a $2 -ge 0' "Out of range [$__LscreenX, $__LscreenY]"
+    checkArgs '$1 -lt $__LscreenX -a $2 -lt $__LscreenY' "Out of range"
+	if [ x$__LdeviceID = x ]
+	then
+		ERROR "Can not run adb functions with no device initiated!"
+		abandon 1
+	fi
+	RUNMSGL ">> Tap screen at coordinate [$1, $2] for ${2}ms"
+    __LadbSwipeScreen $1 $2 $1 $2 $3
+}
+
 __GadbSwipeScreen(){
 	setArgs $*
-	checkArgs '$_funcArgsCnt = 4 -o $_funcArgsCnt = 5' "Too many or too few arguments"
-	checkArgs '`isAllNumber ${_funcArgs[*]}` = 1' "Not a normal number"
+	checkArgs '$# = 4 -o $# = 5' "Too many or too few arguments"
+	checkArgs '`isAllNumber $*` = 1' "Not a normal number"
+	checkArgs '$1 -ge 0 -a $2 -ge 0' "Out of range [$__LscreenX, $__LscreenY]"
+    checkArgs '$1 -lt $__LscreenX -a $2 -lt $__LscreenY' "Out of range [$__LscreenX, $__LscreenY]"
+	checkArgs '$3 -ge 0 -a $4 -ge 0' "Out of range [$__LscreenX, $__LscreenY]"
+    checkArgs '$3 -lt $__LscreenX -a $4 -lt $__LscreenY' "Out of range [$__LscreenX, $__LscreenY]"
 	if [ x$__LdeviceID = x ]
 	then
 		ERROR "Can not run adb functions with no device initiated!"
@@ -113,12 +134,16 @@ __GadbSwipeScreen(){
 	then RUNMSGL ">> Swipe screen from [$1, $2] to [$3, $4]"
 	else RUNMSGL ">> Swipe screen from [$1, $2] to [$3, $4] in ${5}ms"
 	fi
+	__LadbSwipeScreen $*
+}
+
+__LadbSwipeScreen(){
 	checkRun $__LadbShell input swipe $*
 }
 
 __GadbPressKey(){
 	setArgs $*
-	checkArgs '$_funcArgsCnt = 1' "Too many or too few arguments"
+	checkArgs '$# = 1' "Too many or too few arguments"
     if [ x$__LdeviceID = x ]
 	then
 		ERROR "Can not run adb functions with no device initiated!"
@@ -141,25 +166,29 @@ __GadbPressKey(){
 
 __GadbLongPressKey(){
 	setArgs $*
-	checkArgs '$_funcArgsCnt = 2' "Too many or too few arguments"
-	checkArgs '`isNumber ${_funcArgs[2]}` = 1' "Not a number"
+	checkArgs '$# = 2' "Too many or too few arguments"
+	checkArgs '`isNumber $2` = 1' "Not a number"
 	if [ x$__LdeviceID = x ]
 	then
 		ERROR "Can not run adb functions with no device initiated!"
 		abandon 1
 	fi
 	__Lindex=0
-	while [ x${__LkeyNameList[$__Lindex]} != x ]
+	while [ x${__LkeyEventNameList[$__Lindex]} != x ]
 	do
-		if [ ${__LkeyNameList[$__Lindex]} = $1 ]
+		if [ ${__LkeyEventNameList[$__Lindex]} = $1 ]
 		then
-			RUNMSGL ">> Long Press key \"$1(${__LkeyEventValList[$__Lindex]})\" for $2 second(s)"
+            __Ltime=$[$2 / 1000]
+            if [ $__Ltime = 0 ]
+            then __Ltime=1
+            fi
+			RUNMSGL ">> Long Press key \"$1(${__LkeyEventValList[$__Lindex]})\" for ${2}ms"
             checkRun $__LadbShell sendevent \
                     /dev/input/event${__LkeyEventIDList[$__Lindex]} \
                     1 ${__LkeyEventValList[$__Lindex]} 1
             checkRun $__LadbShell sendevent \
                     /dev/input/event${__LkeyEventIDList[$__Lindex]} 0 0 0
-		    sleep $2
+            sleep $__Ltime
             checkRun $__LadbShell sendevent \
                     /dev/input/event${__LkeyEventIDList[$__Lindex]} \
                     1 ${__LkeyEventValList[$__Lindex]} 0
@@ -175,7 +204,7 @@ __GadbLongPressKey(){
 
 __GadbInputText(){
 	setArgs $*
-	checkArgs '$_funcArgsCnt -le 1' "Too many arguments"
+	checkArgs '$# -le 1' "Too many arguments"
     if [ x$__LdeviceID = x ]
 	then
 		ERROR "Can not run adb functions with no device initiated!"
@@ -199,7 +228,7 @@ __GadbInputText(){
 
 __GadbStartApp(){
 	setArgs $*
-	checkArgs '$_funcArgsCnt = 1' "Too many or too few arguents"
+	checkArgs '$# = 1' "Too many or too few arguents"
     if [ x$__LdeviceID = x ]
 	then
 		ERROR "Can not run adb functions with no device initiated!"
@@ -211,7 +240,7 @@ __GadbStartApp(){
 
 __GadbGetBatteryLevel(){
 	setArgs $*
-	checkArgs '$_funcArgsCnt = 0' "Too many arguments"
+	checkArgs '$# = 0' "Too many arguments"
     if [ x$__LdeviceID = x ]
 	then
 		ERROR "Can not run adb functions with no device initiated!"
@@ -224,7 +253,7 @@ __GadbGetBatteryLevel(){
 
 __GadbScreenCapture(){
 	setArgs $*
-	checkArgs '$_funcArgsCnt = 1' "Too many arguments"
+	checkArgs '$# = 1' "Too many arguments"
     if [ x$__LdeviceID = x ]
 	then
 		ERROR "Can not run adb functions with no device initiated!"
@@ -236,8 +265,8 @@ __GadbScreenCapture(){
 
 __GadbDownloadFile(){
 	setArgs $*
-	checkArgs '$_funcArgsCnt = 2' "Too many arguments"
-	checkArgs '-d `dirname ${_funcArgs[2]}`' "No such directory"
+	checkArgs '$# = 2' "Too many arguments"
+	checkArgs '-d `dirname $2`' "No such directory"
     if [ x$__LdeviceID = x ]
 	then
 		ERROR "Can not run adb functions with no device initiated!"
@@ -249,8 +278,8 @@ __GadbDownloadFile(){
 
 __GadbUploadFile(){
 	setArgs $*
-	checkArgs '$_funcArgsCnt = 2' "Too many arguments"
-	checkArgs '-f ${_funcArgs[1]}' "No such file"
+	checkArgs '$# = 2' "Too many arguments"
+	checkArgs '-f $1' "No such file"
     if [ x$__LdeviceID = x ]
 	then
 		ERROR "Can not run adb functions with no device initiated!"
