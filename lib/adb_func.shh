@@ -27,8 +27,9 @@ __LkeyValList=(0 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19
                111 112 115 116 121 122 123 124 143 164 168 169)
 
 __LkeyEventNameList=("Menu" "Home" "Back" "Power" "VolUp" "VolDown")
-__LkeyEventValList=(0 0 0 116 0 0 0)
-__LkeyEventIDList=(5 0 5 5 2 2)
+__LkeyEventValList=(? ? ? 116 114 115)
+__LkeyEventIDList=(? ? ? 0 0 0)
+# The settings above can be different between two different devices
 
 __Ghelp(){
 	ERROR "Help function not impelmented yet!"
