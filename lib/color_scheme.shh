@@ -11,29 +11,61 @@ __Ghelp(){
 	echo "    [echo arguments] These arguments will be directly passed to echo!"
 }
 
+#################################
+
 __GRUNMSG(){
-	__Gecho_color blue bold -t $*
+	__Gecho_color blue bold -t "$*"
+}
+
+__GRUNMSGN(){
+	__Gecho_color blue bold -n -t "$*"
 }
 
 __GRUNMSGL(){
-	__Gecho_color blue -t $*
+	__Gecho_color blue -t "$*"
 }
 
+__GRUNMSGLN(){
+	__Gecho_color blue -n -t "$*"
+}
+
+#################################
+
 __GWARNTL(){
-	__Gecho_color yellow -t $*
+	__Gecho_color yellow -t "$*"
+}
+
+__GWARNTLN(){
+	__Gecho_color yellow -n -t "$*"
 }
 
 __GWARNT(){
-	__Gecho_color yellow bold -t $*
+	__Gecho_color yellow bold -t "$*"
 }
 
+__GWARNTN(){
+	__Gecho_color yellow bold -n -t "$*"
+}
+
+#################################
+
 __GERRORTL(){
-	__Gecho_color red -t $*
+	__Gecho_color red -t "$*"
+}
+
+__GERRORTLN(){
+	__Gecho_color red -n -t "$*"
 }
 
 __GERRORT(){
-	__Gecho_color red bold -t $*
+	__Gecho_color red bold -t "$*"
 }
+
+__GERRORTN(){
+	__Gecho_color red bold -n -t "$*"
+}
+
+#################################
 
 __GWARN(){
 	__Gecho_color yellow bold -n -t "<Warning>"
@@ -44,6 +76,8 @@ __GERROR(){
 	__Gecho_color red bold -n -t "<Error>"
 	echo " $*"
 }
+
+#################################
 
 __LaddColor(){
 	if [ $1 = 0 ]

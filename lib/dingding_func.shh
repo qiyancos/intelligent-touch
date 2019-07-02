@@ -8,4 +8,5 @@ import color_scheme.shh
 import basic_func.shh
 import adb_func.shh
 
-
+__GloadConfig(){
+}
